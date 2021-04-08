@@ -1,0 +1,353 @@
+<html>
+<head>
+<title>Video Proccessing and Motion Magnification</title>
+<link href='http://fonts.googleapis.com/css?family=Nunito:300|Crimson+Text|Droid+Sans+Mono' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" title="Default" href="styles/github.css">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript"
+  src="http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<link rel="stylesheet" href="highlighting/styles/default.css">
+<script src="highlighting/highlight.pack.js"></script>
+
+<style type="text/css">
+body {
+	margin: 0px;
+	width: 100%;
+	font-family: 'Crimson Text', serif;
+	font-size: 20px;
+	background: #fcfcfc;
+}
+h1 {
+	font-family: 'Nunito', sans-serif;
+	font-weight: normal;
+	font-size: 28px;
+	margin: 25px 0px 0px 0px;
+	text-transform: lowercase;
+
+}
+
+h2 {
+	font-family: 'Nunito', sans-serif;
+	font-weight: normal;
+	font-size: 32px;
+	margin: 15px 0px 35px 0px;
+	color: #333;	
+	word-spacing: 3px;
+}
+
+h3 {
+	font-family: 'Nunito', sans-serif;
+	font-weight: normal;
+	font-size: 26px;
+	margin: 10px 0px 10px 0px;
+	color: #333;
+	word-spacing: 2px;
+}
+h4 {
+	font-family: 'Nunito', sans-serif;
+	font-weight: normal;
+	font-size: 22px;
+	margin: 10px 0px 10px 0px;
+	color: #333;
+	word-spacing: 2px;
+}
+
+h5 {
+	font-family: 'Nunito', sans-serif;
+	font-weight: normal;
+	font-size: 18px;
+	margin: 10px 0px 10px 0px;
+	color: #111;
+	word-spacing: 2px;
+}
+
+p, li {
+	color: #444;
+}
+
+a {
+	color: #de3737;
+}
+
+.container {
+	margin: 0px auto 0px auto;
+	width: 960px;
+}
+
+#header {
+	background: #333;
+	width: 100%;
+}
+
+#headersub {
+	color: #ccc;
+	width: 960px;
+	margin: 0px auto 0px auto;
+	padding: 20px 0px 20px 0px;
+}
+
+.chart {
+	width: 480px;
+}
+.lol {
+	font-size: 16px;
+	color: #888;
+	font-style: italic;
+}
+.sep {
+	height: 1px;
+	width: 100%;
+	background: #999;
+	margin: 20px 0px 20px 0px;
+}
+.footer{
+	font-size: 16px;
+}
+.latex {
+	width: 100%;
+}
+
+.latex img {
+	display: block;
+	margin: 0px auto 0px auto;
+}
+
+pre {
+	font-family: 'Droid Sans Mono';
+	font-size: 14px;
+}
+
+td img {
+  vertical-align: middle;
+}
+
+#contents a {
+}
+</style>
+<script type="text/javascript">
+    hljs.initHighlightingOnLoad();
+</script>
+</head>
+<body>
+<div id="header" >
+<div id="headersub">
+<h1>Minh Nguyen <span style="color: #DE3737"></span></h1>
+</div>
+</div>
+<div class="container">
+<h2>Video Processing and Motion Magnification</h2>
+<p>Link to Google Colab: <a href="https://drive.google.com/file/d/1uSgRzrWGzReRXmTfLfRd_zKpSZnm8R7L/view?usp=sharing">https://drive.google.com/file/d/1uSgRzrWGzReRXmTfLfRd_zKpSZnm8R7L/view?usp=sharing</a></p>
+
+<div style="float: right; padding: 20px">
+<img src="media\dog_first_last_frames.png" />
+</div>
+
+<h3>Basic Video Processing</h3>
+
+<h4>Display space-time splice of the video</h4>
+
+<p>     To create a 2D plot where Y axis is t and X-axis is n, we need to, for each frame, take a vector of pixels at a fixed y-position and show an image of nFrames*nhorizontal pixels as a final image. Essentially, we have to store the column data in each image into a new image array.</p>
+
+<center>
+<div style="float:; padding: 20px">
+<img src="media\dog_spacetime_slice.png" />
+</div>
+</center>
+
+<h4>Create a space-temporal Gaussian filter</h4>
+
+<p>     For temporal gaussian filters, we must consider time as a variable. Once we have the filter, we extract the data from the central column in each image into a new image array.</p>
+
+<div style="...">
+    <center>
+<img src="media\temporal_gaussian.png" />
+    </center>
+</div>
+
+<pre><code>
+def gausssian_temporal_filter(time,sigma_x,sigma_t,size,vx,vy):
+  sigma_x = 1
+  sigma_t = 4
+
+  gausssian_filter=[]
+  for t in range(-(time//2),time//2,1):
+
+    x = np.arange(-(size//2), size//2, 1)
+    y = np.arange(-(size//2), size//2, 1)
+    xx, yy = np.meshgrid(x, y)
+
+    exp_xy=np.exp(-((xx -vx*t) ** 2 + (yy-vy*t) ** 2) / (2 * sigma_x ** 2))
+    exp_t=np.exp(-(t**2)/(2 * (sigma_t)**2))
+    g_filter = exp_xy*exp_t / ( ((2*np.pi)**(3/2)) * ((sigma_x)**2) * sigma_t) # g(x, y, t; sigma_x, sigma_t)
+
+    gausssian_filter.append(g_filter)
+
+  img=[]
+  center = size//2
+  for i in range(time-1, -1,-1):
+    try:
+      img.append(gausssian_filter[i][center])
+    except:
+      print(i)
+
+  return img
+</code></pre>
+
+<center>
+<div style="float:; padding: 20px">
+<img src="media\gaussian_temporal_filter.png" />
+</div>
+</center>
+
+<h3>Motion Magnification</h3>
+
+<h4>Magnify Change</h4>
+
+<div style="float: right; padding: 20px">
+<img src="media\2a_magnified.png" />
+</div>
+
+<p> 	To magnify position change, we first need to find the phase shift in the frequency domain of both im1 and im2. This can be done by taking their angle.</p>
+
+<p>     Once that is done, we magnify the phase change in the frequency domain - in python: abs(im1Dft) * exp( (angle(im1Dft) + magnificationFactor*phaseShift) * 1j. To see what the magnified phase change do in the image space we look at the real component - in python: ifft2(magnifiedDft).real.</p>
+
+<h4>Multi Direction Motion Between 2 Images</h4>
+
+<div style="float: right; padding: 20px">
+<img src="media\2b_magnified.png" />
+</div>
+
+<p> 	In this example, we have two direction of motion in our two images. This causes both horizontal and vertical shifts in the objects from the images. We will need to take smaller patches of magnification to address this issue.</p>
+
+<br>
+
+<h4>Localized Fourier Transform</h4>
+
+<div style="float: right; padding: 20px">
+<img src="media\2c_magnified.png" />
+</div>
+
+<p> 	Localized Fourier Transform independently magnifies the offsets on small windows of the images and aggregates the results across the windows. It works because the likelihood of everything in our window moving in the same direction is high. Thus, addressing the issue of having both horizontal and vertical shifts in the objects from our images.</p>
+
+<p>     In this example, we are using a discrete Gaussian filter to mask small windows of the image then perform magnification on each window independently. Please see code below:</p>
+
+<pre><code>
+# we will magnify windows of the image and aggregate the results
+magnified = np.zeros([imSize, imSize])
+
+# meshgrid for computing Gaussian window
+X, Y = np.meshgrid(np.arange(imSize), np.arange(imSize))
+
+for y in range(0, imSize, 2*sigma):
+    for x in range(0, imSize, 2*sigma):
+        gaussianMask = exp( (-(X-x)**2 - (Y-y)**2)/(2*sigma**2)) # TODO
+        # im1_g = im1 * gaussianMask
+        # im2_g = im2 * gaussianMask
+        windowMagnified = magnifyChange(im1 * gaussianMask, im2 * gaussianMask, magnificationFactor) #TODO
+        magnified = magnified + windowMagnified
+</code></pre>
+
+<h4>Motion Magnification (guitar and dog)</h4>
+
+<p> 	We now expand what we did in the previous section on two short videos: guitar.mp4 and mydog.avi. However, this time, we will keep a moving average of the Fourier-transformed phases and compare each new frame’s DFT phase with the current moving average of phase. Below are the steps that must be taken for x and y in the RGB channels (3) for each frame.</p>
+
+<ul>
+    <li>Create windowed frames: exp((-(X-x)**2 - (Y-y)**2)/(2*sigma**2)) </li>
+    <li>Initialize moving average of phase for current window/channel</li>
+    <li>Compute phase shift and constrain to [-pi,pi]</li>
+    <li>Magnify phase shift: windowPhaseShift * magnificationFactor</li>
+    <li>Go back to the image space: abs(windowDft)*exp((angle(windowDft)+windowMagnifiedPhase)*1j)</li>
+    <li>Update moving average</li>
+    <li>Aggregate the frames</li>
+</ul>
+
+<p>     Note: The code may take some time to run. To reduce the number of windowed regions to process, we can modify sigma.</p>
+
+<pre><code>
+# 10x magnification of motion
+magnificationFactor = 10
+
+# width of Gaussian window
+sigma = 13
+
+# alpha for moving average
+alpha = 0.5
+
+# we will magnify windows of the video and aggregate the results
+magnified = np.zeros_like(frames)
+
+# meshgrid for computing Gaussian window
+X, Y = np.meshgrid(np.arange(width), np.arange(height))
+
+# iterate over windows of the frames
+xRange = list(range(0, width, 2*sigma))
+yRange = list(range(0, height, 2*sigma))
+numWindows = len(xRange) * len(yRange)
+windowIndex = 1
+
+for y in yRange:
+    for x in xRange:
+        for channelIndex in range(3): # RGB channels
+            for frameIndex in range(numFrames):
+
+                # create windowed frames
+                gaussianMask = exp(( -(X-x)**2 - (Y-y)**2)/(2*sigma**2)) # TODO
+                windowedFrames = gaussianMask * frames[frameIndex,:,:,channelIndex]
+
+                # initialize moving average of phase for current window/channel
+                if frameIndex == 0:
+                    windowAveragePhase = angle(fft2(windowedFrames))
+
+                windowDft = fft2(windowedFrames)
+
+                # compute phase shift and constrain to [-pi, pi] since
+                # angle space wraps around
+                windowPhaseShift = angle(windowDft) - windowAveragePhase
+                windowPhaseShift[windowPhaseShift > pi] = windowPhaseShift[windowPhaseShift > pi] - 2 * pi
+                windowPhaseShift[windowPhaseShift < -pi] = windowPhaseShift[windowPhaseShift < -pi] + 2 * pi
+
+                # magnify phase shift
+                windowMagnifiedPhase = windowPhaseShift * magnificationFactor # TODO
+
+                # go back to image space
+                windowMagnifiedDft = abs(windowDft)*exp((angle(windowDft)+windowMagnifiedPhase)*1j) # TODO
+                windowMagnified = abs(ifft2(windowMagnifiedDft))
+
+                # update moving average
+                windowPhaseUnwrapped = windowAveragePhase + windowPhaseShift
+                windowAveragePhase = alpha * windowAveragePhase + (1 - alpha) * windowPhaseUnwrapped
+
+                # aggregate
+                magnified[frameIndex,:,:,channelIndex] = magnified[frameIndex,:,:,channelIndex] + windowMagnified
+
+        # print progress
+        print('{}/{}'.format(windowIndex, numWindows), end='\r')
+        windowIndex += 1
+</code></pre>
+
+<h4>Results</h4>
+
+<p>     As a result, we went from barely seeing any motion in the guitar video to see obvious movement, especially in the first string.</p>
+
+<p>     In the dog original video, there was obvious movement so it resulted in a vibration-like aura around the dog.</p>
+
+<div style="float: right; padding: 20px">
+<table border=1>
+<tr>
+<td>
+<video width="49%" height="240" controls><source src="media/guitar_magnified.mp4" type="video/mp4"></video>
+<video width="49%" height="240" controls><source src="media/dog_magnified.mp4" type="video/mp4"></video>
+</td>
+</tr>
+</table>
+</div>
+
+<br/>
+
+</body>
+</html>
